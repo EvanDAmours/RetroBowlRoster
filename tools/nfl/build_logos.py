@@ -1,18 +1,21 @@
 """Builds html5game/RetroBowl_texture_2.png (the spr_nfl_logos sheet).
 
-Each team gets an original 8-bit badge: a shield in the team's colours with the
-team abbreviation in a pixel font. (No official logo artwork is used.)
+Each team's logo comes from tools/nfl/logos/<ABBR>.png (e.g. BUF.png). Those images are
+pixel art drawn on a 4x grid (256x256 = 64x64 art pixels), so they are sampled back to
+their real 64x64 pixels with no blurring. A team without an image falls back to a
+generated badge: a shield in the team's colours with its abbreviation.
 
     python3 tools/nfl/build_logos.py [--preview out.png]
 
-Layout: 8 x 4 grid of 32x32 cells; frame N (team uid N) is centred in cell N.
+Layout: 8 x 4 grid of 64x64 cells; frame N (team uid N) is centred in cell N.
 """
 import os, sys
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "..", "..", "html5game", "RetroBowl_texture_2.png")
-CELL, COLS = 32, 8
+CELL, COLS = 64, 8
+LOGOS = os.path.join(HERE, "logos")
 
 # uid -> (abbreviation, fill, trim, letters)   index == team uid in Teams.txt
 TEAMS = [
@@ -108,11 +111,32 @@ def badge(abbr, fill, trim, ink):
     return im
 
 
+def from_file(path):
+    """Sample a pixel-art image back to its native pixel grid and crop it."""
+    src = Image.open(path).convert("RGBA")
+    grid = max(1, src.width // CELL)  # 256px image -> 4px per art pixel
+    w, h = src.width // grid, src.height // grid
+    out = Image.new("RGBA", (w, h))
+    sp, op = src.load(), out.load()
+    for y in range(h):
+        for x in range(w):  # centre of each block, no averaging
+            op[x, y] = sp[x * grid + grid // 2, y * grid + grid // 2]
+    box = out.getbbox()
+    out = out.crop(box) if box else out
+    if out.width > CELL - 2 or out.height > CELL - 2:
+        out.thumbnail((CELL - 2, CELL - 2), Image.NEAREST)
+    return out
+
+
 def main():
     assert len(TEAMS) == 32
     sheet = Image.new("RGBA", (CELL * COLS, CELL * 4), (0, 0, 0, 0))
     for i, t in enumerate(TEAMS):
-        im = badge(*t)
+        path = os.path.join(LOGOS, t[0] + ".png")
+        if os.path.exists(path):
+            im = from_file(path)
+        else:
+            im = badge(*t).resize((56, 56), Image.NEAREST)
         cx, cy = (i % COLS) * CELL, (i // COLS) * CELL
         sheet.alpha_composite(im, (cx + (CELL - im.width) // 2, cy + (CELL - im.height) // 2))
     sheet.save(OUT)

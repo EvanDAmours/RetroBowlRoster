@@ -8,7 +8,7 @@ const file = path.join(__dirname, "../../html5game/RetroBowl.js");
 let s = fs.readFileSync(file, "utf8");
 if (s.includes("'spr_nfl_logos'")) { console.log("already patched"); process.exit(0); }
 
-const CELL = 32, COLS = 8, COUNT = 32;
+const CELL = 64, COLS = 8, COUNT = 32;
 const TPE_BASE = 637; // existing texture page entries: 0..636
 
 function replaceOnce(from, to) {
