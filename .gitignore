@@ -1,1 +1,3 @@
 node_modules
+tools/nfl/.cache/
+__pycache__/

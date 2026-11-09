@@ -82,16 +82,16 @@ match_Incomplete	Incomplete
 match_OutOfBounds	Out of bounds
 match_Sacked	Sacked
 match_Fumble	Fumble
-comm_stage_KickOff	$teamname kicks off
+comm_stage_KickOff	$teamname kick off
 comm_stage_Possession_OwnHalf1	$teamname on their own $num
 comm_stage_Possession_OwnHalf2	$teamname in their own half
-comm_stage_Possession_OwnHalf3	$teamname has possession
-comm_stage_Possession_OppHalf1	$teamname has it on the $num
+comm_stage_Possession_OwnHalf3	$teamname have possession
+comm_stage_Possession_OppHalf1	$teamname have it on the $num
 comm_stage_Possession_OppHalf2	$teamname on the $num
-comm_stage_Possession_OppHalf3	$teamname has possession
+comm_stage_Possession_OppHalf3	$teamname have possession
 comm_stage_Possession_RedZone	$teamname in the red zone
 comm_stage_Possession_BackedUp	$teamname deep in their own half
-comm_stage_Possession_Halfway	$teamname has it in midfield
+comm_stage_Possession_Halfway	$teamname have it in midfield
 comm_stage_PuntReturnGood	That's a good return
 comm_stage_PuntReturnShort	It's a short return
 comm_stage_DriveRun0	They run the ball
@@ -141,7 +141,7 @@ comm_stage_failed_speed	[$pos] $playername was too slow
 comm_stage_failed_strength	[$pos] $playername wasn't strong enough
 comm_stage_incomplete_Run	It's short of the 1st down
 comm_stage_incomplete_Pass	Incomplete
-comm_stage_GoForIt	$teamname is going for it on 4th down
+comm_stage_GoForIt	$teamname are going for it on 4th down
 down_1	1st down
 down_2	2nd down
 down_3	3rd down
@@ -350,8 +350,8 @@ msg_CannotTradeInjured	No teams are interested in taking $playername whilst he i
 msg_CannotTradeToxic	No teams are interested in taking $playername whilst his attitude is toxic.##Do you want to cut this player from your roster instead?
 msg_CannotSignMoraleLow	$playername is not interested in signing a new contract. His morale is low.
 msg_CannotTradeRookie	$playername does not want to be traded.##Do you want to cut this player from your roster instead?
-msg_TradePlayerThis	$teamname is offering a round $num pick in this season's draft for $position $playername.
-msg_TradePlayerNext	$teamname is offering a round $num pick in next season's draft for $position $playername.
+msg_TradePlayerThis	$teamname are offering a round $num pick in this season's draft for $position $playername.
+msg_TradePlayerNext	$teamname are offering a round $num pick in next season's draft for $position $playername.
 ui_Draft	Draft
 ui_RookieDraft	Rookie Draft
 ui_DraftRound	Draft Round $num
@@ -416,7 +416,7 @@ ui_Pick	Pick
 ui_ExceedSalaryCap	Signing $playername will exceed the salary cap.##You have $$numm remaining.##You will need to cut or trade players from your roster to sign this player.
 msg_FreeAgentOffer	$position $playername is a free agent looking for a team.##He arrives at the training facility for your assessment.
 msg_FreeAgentOffer_Rookie	$position $playername was an undrafted rookie.##Coach $coachname thinks he is an interesting prospect.
-msg_TradeOffer	$teamname is offering $position $playername as a trade.##In return they want a round $num pick in next season's draft.
+msg_TradeOffer	$teamname are offering $position $playername as a trade.##In return they want a round $num pick in next season's draft.
 msg_TradeOfferSign	Do you want to sign $position $playername from $teamname?##He will cost you a round $num pick in next season's draft.
 ui_Cost	Cost
 ui_TradeRequest	Trade Request
@@ -611,11 +611,11 @@ tla_Age	Age
 tla_Contract	Cnt
 tla_Salary	Sal
 sla_Million	M
-news_SignCoach	$teamname has signed $position $playername.
-news_SignFreeAgent	$teamname has signed $age year old free agent $playername.
-news_ResignedPlayer	$teamname has agreed a $salary deal with $age year old $position $playername.
-news_SignTrade	$teamname has signed $age year old $position $playername from $otherteamname.
-news_SignTrade2	$teamname has signed $age year old $position $playername.
+news_SignCoach	$teamname have signed $position $playername.
+news_SignFreeAgent	$teamname have signed $age year old free agent $playername.
+news_ResignedPlayer	$teamname have agreed a $salary deal with $age year old $position $playername.
+news_SignTrade	$teamname have signed $age year old $position $playername from $otherteamname.
+news_SignTrade2	$teamname have signed $age year old $position $playername.
 ui_Year	Year
 sla_Year	Y
 ui_Change	Change
@@ -625,16 +625,16 @@ ui_FirstName	First Name
 ui_LastName	Last Name
 ui_Details	Details
 ui_NewCareer	New Career
-news_NewCareer	With just $num $weeks left in the regular season $teamname have appointed $coachname as their new head coach.##$lname has worked at the college level for several years and was excelling as the head coach of $randomcollegename before taking the reigns at $teamname.
+news_NewCareer	With just $num $weeks left in the regular season $teamname have appointed $coachname as their new head coach.##$lname has worked at the college level for several years and was excelling as the head coach of $randomcollegename before taking the reins at the $teamname.
 ui_StartWithFave	Start with favorite team?
 info_StartWithFave	Retro Bowl is a game all about building a legacy. If you choose to start with your favorite team that's fine but the story of your career will be a simple one.##Why not start out at a low ranked team and prove yourself as a head coach before receiving that dream job offer from your favorite team?
-msg_Intro_1	Welcome to $teamname!##This is your home screen. You can tap on the division table to view divisions and the schedule.##When you are ready tap the F.OFFICE button.
+msg_Intro_1	Welcome to the $teamname!##This is your home screen. You can tap on the division table to view divisions and the schedule.##When you are ready tap the F.OFFICE button.
 msg_Intro_2	From the Front Office you can upgrade facilities and staff.##Tapping an 'i' icon will bring up useful information.
 msg_Intro_3	I'm sure you want to meet your players so let's check the ROSTER screen.
 msg_Intro_4	These are your key players. You don't need to manage the entire roster, just take care of these guys and everyone else will fall into line.##Tap on a player to open his profile.
 msg_Intro_5	Here you can view player details and attributes. Keep an eye on morale and condition.##Poor morale can lead to game penalties and problems off the field.##Low condition can lead to injury or worse - fumbles!
 msg_Intro_6	Before we head into a game let's go over the basics for controlling your players on the field.
-msg_Intro_8	Well done! You have taken charge of $teamname near the end of difficult season - just enough time to get the hang of things before next season starts.##The $teamname fans are desperate for you to turn things around. Good luck!
+msg_Intro_8	Well done! You have taken charge of the $teamname near the end of difficult season - just enough time to get the hang of things before next season starts.##The $teamname fans are desperate for you to turn things around. Good luck!
 msg_Intro_Passing	First up, passing.##Drag your finger in the opposite direction of the running receiver to aim, then release to throw.
 msg_Intro_PassingBrowser	First up, passing.##Click and drag in the opposite direction of the running receiver to aim, then release to throw.
 msg_Intro_Running	Nice! At the start of each play you can hand the ball off to your Running Back by tapping the blue circle.##Swiping up or down whilst running will perform a side-step or you can swipe back to slow up.
@@ -680,9 +680,9 @@ msg_CoinTossLoss1	$teamname won the toss and will kick off.
 msg_CoinTossLoss2	$teamname won the toss and will receive the kick off.
 match_KickOff	Kick Off
 match_Receive	Receive
-news_firstmatchWin	$yourname's first game in charge of $teamname1 ended with a win against $teamname2.##The $teamname1 fans will be looking forward to next season now with renewed hope.
-news_firstmatchLoss	$yourname's first game in charge of $teamname1 ended in defeat against $teamname2.##$yourlastname will be left in no doubt about how much work there is to do to turn this team's fortunes around.
-news_firstmatchTie	$yourname managed to avoid defeat after taking charge of $teamname1.##$yourlastname will be hoping for a good draft to boost their playoff chances next season.
+news_firstmatchWin	$yourname's first game in charge of the $teamname1 ended with a win against $teamname2.##The $teamname1 fans will be looking forward to next season now with renewed hope.
+news_firstmatchLoss	$yourname's first game in charge of the $teamname1 ended in defeat against $teamname2.##$yourlastname will be left in no doubt about how much work there is to do to turn this team's fortunes around.
+news_firstmatchTie	$yourname managed to avoid defeat after taking charge of the $teamname1.##$yourlastname will be hoping for a good draft to boost their playoff chances next season.
 coachtrait_0	None
 coachtrait_1	Experience
 coachtrait_2	Talent Spotter
@@ -717,7 +717,7 @@ msg_JobOffers_1	Your raw talent as a head coach is making waves in the league. A
 msg_JobOffers_2	Your reputation is growing! The following teams are interested in taking you on as head coach.
 msg_JobOffers_3	Your reputation is widely acknowledged within the game and there are a number of teams interested in taking you on as head coach.
 msg_JobOffers_4	Your wealth of experience and knowledge of the game make you the most highly sought after coach in the league. Teams are queuing up to take you on as head coach.
-msg_ChooseNewTeam	Do you want to take charge of $teamname?
+msg_ChooseNewTeam	Do you want to take charge of the $teamname?
 news_NewJob1	$oldteamname head coach $yourname has decided it is time to move on and takes charge of $newteamname. The existing coaching staff have all been released.
 news_NewJob2	$yourname has called it a day at $oldteamname and takes on a new challenge as head coach of $newteamname. The previous co-ordinators have decided to move on.
 news_NewJob3	$oldteamname fans may be in shock today as $yourname walks out on them to become the new head coach of $newteamname. Assessing the squad and recruiting new co-ordinators will be a priority upon arrival.
@@ -1010,7 +1010,7 @@ rating_Good	Good
 rating_Ok	Ok
 rating_Poor	Poor
 rating_Terrible	Terrible
-msg_Watermark	$teamname has a record of $record.
+msg_Watermark	$teamname have a record of $record.
 msg_WatermarkHighlight	The highlight of the season was a win of $result against $oppname.
 msg_WatermarkRestarts	Their season has been tainted by $num false starts.
 ui_restarts	restarts
@@ -1122,11 +1122,11 @@ match_Punt	Punt
 msg_OnSideKick	Do you want to try an onside kick? You will have a $num% chance of recovering the ball.
 match_OnsideKicking	$teamname try the onside kick!
 match_OnsideKickingPlayer	$playername attempts the onside kick!
-match_OnsideKickingSuccess	And $teamname recovers the ball!
-match_OnsideKickingFail	But $teamname recovers the ball
+match_OnsideKickingSuccess	And $teamname recover the ball!
+match_OnsideKickingFail	But $teamname recover the ball
 ui_Logo	Logo
 ui_Rush	Rush
-comm_stage_KickOffPlayer	$playername kicks off for $teamname
+comm_stage_KickOffPlayer	$playername kicks off for the $teamname
 ui_DataError	A data error has occurred: ($num)
 msg_BulletThrow	BULLET THROW!#You can switch between a low or high pass by tapping the screen with a second finger whilst aiming.
 msg_BulletThrowHtml	BULLET THROW!#You can switch between a low or high pass by clicking the right mouse button whilst aiming.
