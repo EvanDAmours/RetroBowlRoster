@@ -1,6 +1,38 @@
 // Fixes for playing on phones (iPhone home-screen app, mobile Safari, Android).
 // Loaded after html5game/RetroBowl.js and before the game starts.
 (function () {
+  // 0) iPhone/iPad: on a fresh launch the players are sometimes not drawn at all, and
+  //    "RELOAD GAME" in the mod menu always fixes it. So do that reload automatically,
+  //    once per launch: let the game finish starting, then reload, with a black loading
+  //    screen over it. Never loops: it is skipped when this page load is itself a reload
+  //    or when it already happened in this session.
+  var isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  var wasReload = false;
+  try {
+    var nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+    wasReload = !!(nav && nav.type === "reload");
+  } catch (e) {}
+  var alreadyDone = true;
+  try { alreadyDone = sessionStorage.getItem("rb_auto_reload") === "1"; } catch (e) {}
+  if (isIOS && !wasReload && !alreadyDone) {
+    try { sessionStorage.setItem("rb_auto_reload", "1"); } catch (e) {}
+    var cover = document.createElement("div");
+    cover.style.cssText = "position:fixed;inset:0;z-index:30000;background:#000;color:#fff;display:flex;" +
+      "align-items:center;justify-content:center;font:12px 'Press Start 2P',monospace";
+    cover.textContent = "LOADING...";
+    document.body.appendChild(cover);
+    var waited = 0, timer = setInterval(function () {
+      waited += 200;
+      var started = false;
+      try { var g = _si(64); for (var k in g) if (Object.prototype.hasOwnProperty.call(g, k)) { started = true; break; } } catch (e) {}
+      if (started || waited > 15000) {
+        clearInterval(timer);
+        setTimeout(function () { location.reload(); }, started ? 500 : 0);
+      }
+    }, 200);
+  }
+
   // 1) Taps did nothing on iOS/Android. When the game sees a phone OS it switches to the
   //    native app's touch-button mode, which does not work in this web build. Report a
   //    desktop OS instead: touches still arrive as pointer input, exactly like the mouse,
