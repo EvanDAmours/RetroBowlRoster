@@ -293,6 +293,98 @@
   }, 500);
   after("_bH", realTradeList);       // trade list refresh
 
+  // ---------- game simulation ----------
+  // Ends the user's match with a score generated from both teams' offense / defense
+  // (the same inputs the game uses to simulate every other fixture).
+  var AUTOSIM_KEY = "nfl_autosim";
+  function currentMatch() {
+    var all = _si(71);
+    for (var k in all) if (Object.prototype.hasOwnProperty.call(all, k)) return all[k];
+    return null;
+  }
+  function rnd(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function footballScore(expected) {
+    var pts = Math.max(0, Math.round(expected + rnd(-8, 8)));
+    var td = Math.floor(pts / 7), rest = pts - td * 7, fg = rest >= 5 ? 2 : rest >= 2 ? 1 : 0;
+    var score = td * 7 + fg * 3;
+    if (td > 0 && Math.random() < 0.08) score -= 1; // missed extra point
+    return score;
+  }
+  function simulateMatch() {
+    var g = globalObj(), match = currentMatch();
+    if (!g || !match || !match._Sb1 || match._0z === undefined) return false;
+    if (g._fx) return false; // practice / training session
+    var teams = g._Fj || [], me = Number(g._Ip), mine = null, theirs = null, homeIsMe = false;
+    for (var i = 0; i < 2; i++) {
+      var t = teams[i];
+      if (t === undefined) continue;
+      if (Number(_Ai(t, "uid")) === me) { mine = t; homeIsMe = i === 1; } else theirs = t;
+    }
+    var num = function (t, k, d) { var v = t ? Number(_Ai(t, k)) : NaN; return isFinite(v) ? v : d; };
+    var myOff = num(mine, "offense", 6), myDef = num(mine, "defense", 6);
+    var opOff = num(theirs, "offense", 6), opDef = num(theirs, "defense", 6);
+    var myScore = footballScore(21 + (myOff - opDef) * 2.2 + (homeIsMe ? 1.5 : 0));
+    var opScore = footballScore(21 + (opOff - myDef) * 2.2 + (homeIsMe ? 0 : 1.5));
+    var myOT = 0, opOT = 0;
+    if (myScore === opScore) { // settle it in overtime: the stronger side is more likely to score
+      var myEdge = (myOff + myDef) - (opOff + opDef) + (homeIsMe ? 1 : -1);
+      if (Math.random() < 0.5 + myEdge * 0.04) myOT = 3; else opOT = 3;
+    }
+    var side = match._0z ? 1 : 0;
+    // per-quarter scoreboard (4 quarters + overtime) shown on the result screen
+    var byQuarter = function (total, ot) {
+      var q = [0, 0, 0, 0, ot], left = total;
+      while (left > 0) {
+        var c = left >= 9 || left === 7 ? 7 : left === 8 ? 3 : left >= 6 ? 6 : left >= 3 ? 3 : left;
+        q[rnd(0, 3)] += c;
+        left -= c;
+      }
+      return q;
+    };
+    var boards = [g._Et, g._Ht], mineQ = byQuarter(myScore, myOT), theirQ = byQuarter(opScore, opOT);
+    [mineQ, theirQ].forEach(function (q, who) {
+      var arr = boards[who === 0 ? side : 1 - side];
+      if (arr) for (var i = 0; i < 5; i++) arr[i] = q[i];
+    });
+    myScore += myOT; opScore += opOT;
+    // the game's own "end match" routine adds 3 points to the user's side
+    match._Sb1[side] = myScore - 3;
+    match._Sb1[side ? 0 : 1] = opScore;
+    _5g1(g, g);
+    return true;
+  }
+  var autosim = false;
+  try { autosim = localStorage.getItem(AUTOSIM_KEY) === "1"; } catch (e) {}
+  var autosimBox = document.getElementById("nfl-autosim");
+  if (autosimBox) {
+    autosimBox.checked = autosim;
+    autosimBox.onchange = function () {
+      autosim = autosimBox.checked;
+      try { localStorage.setItem(AUTOSIM_KEY, autosim ? "1" : "0"); } catch (e) {}
+    };
+  }
+  function closeModMenu() {
+    var x = document.getElementById("jax-x"), panel = document.getElementById("jax-panel");
+    if (x && panel && panel.classList.contains("open")) x.click();
+  }
+  var simBtn = document.getElementById("a-nfl-sim");
+  if (simBtn) simBtn.onclick = function () {
+    if (!currentMatch()) { alert("Start a game first, then press SIM THIS GAME."); return; }
+    closeModMenu();
+    setTimeout(function () { try { simulateMatch(); } catch (e) { alert("Could not simulate: " + e.message); } }, 300);
+  };
+  var lastSimmed = null;
+  setInterval(function () {
+    if (!autosim) return;
+    try {
+      var match = currentMatch();
+      if (!match || match === lastSimmed) return;
+      if (document.getElementById("jax-panel").classList.contains("open")) return;
+      lastSimmed = match;
+      setTimeout(function () { try { if (currentMatch() === match) simulateMatch(); } catch (e) {} }, 1200);
+    } catch (e) {}
+  }, 500);
+
   // ---------- drawing hooks ----------
 
   var drawText = _nh1, drawTextColour = _RD1, drawTextTransformed = __G1, drawSprite = _mh1;
