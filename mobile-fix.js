@@ -45,6 +45,42 @@
   window.addEventListener("pointerup", fingerUp);
   window.addEventListener("pointercancel", fingerUp);
 
+  // 1c) Diagnostics: record WebGL shader compile / link failures and the GPU, so problems
+  //     that only happen on a real phone (e.g. players not being drawn) can be reported
+  //     from the mod menu (NFL > SHOW DIAGNOSTICS).
+  var glReport = { errors: [], renderer: "", version: "", players: 0 };
+  window.__rbDiagnostics = glReport;
+  var getContext = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (type) {
+    var gl = getContext.apply(this, arguments);
+    if (gl && /webgl/i.test(String(type)) && !gl.__rbHooked) {
+      gl.__rbHooked = true;
+      try {
+        var dbg = gl.getExtension("WEBGL_debug_renderer_info");
+        glReport.renderer = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+        glReport.version = gl.getParameter(gl.VERSION);
+        var hp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
+        glReport.fragHighp = hp ? hp.precision : 0;
+      } catch (e) {}
+      var compile = gl.compileShader, link = gl.linkProgram;
+      gl.compileShader = function (sh) {
+        compile.call(gl, sh);
+        try {
+          if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS))
+            glReport.errors.push("compile: " + (gl.getShaderInfoLog(sh) || "?").slice(0, 300));
+        } catch (e) {}
+      };
+      gl.linkProgram = function (pr) {
+        link.call(gl, pr);
+        try {
+          if (!gl.getProgramParameter(pr, gl.LINK_STATUS))
+            glReport.errors.push("link: " + (gl.getProgramInfoLog(pr) || "?").slice(0, 300));
+        } catch (e) {}
+      };
+    }
+    return gl;
+  };
+
   // 2) Wide phones: the game is drawn at 16:9 and centred, with plain black bars at the sides.
   document.documentElement.style.background = "#000";
 

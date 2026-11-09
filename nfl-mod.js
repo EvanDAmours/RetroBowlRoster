@@ -2,6 +2,7 @@
 // midfield logo and endzone team names. Loaded after RetroBowl.js, before mod-menu.js.
 (function () {
   var LOGO_SPRITE = 205; // spr_nfl_logos, frame == team uid (see tools/nfl)
+  var LOGO_W = 56, LOGO_H = 26; // size of the team logo art inside each 64x64 frame
 
   // uid: [old city name, NFL name, old abbreviation, NFL abbreviation]
   var TEAMS = [
@@ -272,6 +273,24 @@
     } catch (e) { alert("Could not load the roster: " + e.message); }
   };
 
+  // mod menu: device / graphics report (see mobile-fix.js)
+  var diagBtn = document.getElementById("a-nfl-diag");
+  if (diagBtn) diagBtn.onclick = function () {
+    var d = window.__rbDiagnostics || {}, match = null;
+    try { match = currentMatch(); } catch (e) {}
+    var players = 0;
+    try { var all = _si(72); for (var k in all) if (Object.prototype.hasOwnProperty.call(all, k)) players++; } catch (e) {}
+    var c = document.getElementById("canvas");
+    alert([
+      "GPU: " + (d.renderer || "?"),
+      "WebGL: " + (d.version || "?") + "  highp: " + (d.fragHighp || 0),
+      "Screen: " + innerWidth + "x" + innerHeight + " @" + (window.devicePixelRatio || 1) + "x  canvas " + (c ? c.width + "x" + c.height : "?"),
+      "In a game: " + (match ? "yes" : "no") + "  players on field: " + players,
+      "Shader errors: " + (d.errors && d.errors.length ? d.errors.join(" || ") : "none"),
+      navigator.userAgent
+    ].join("\n"));
+  };
+
   after("_qK", installRealRoster);   // roster for a brand new save
   after("_cE", installRealRoster);   // roster when taking charge of a team
 
@@ -396,8 +415,9 @@
     var halign = _nD2._iF2, valign = _nD2._jF2;
     // small table text gets a compact logo; headline text a bigger one
     var small = h < 17;
-    var scale = small ? 12 / 28 : Math.round((h * 1.5 / 28) * 2) / 2;
-    var size = 28 * scale, gap = small ? 3 : Math.max(2, h * 0.3);
+    // logo art is about LOGO_W x LOGO_H pixels inside its 64x64 frame
+    var scale = small ? 11 / LOGO_H : Math.max(0.5, Math.round((h * 1.3 / LOGO_H) * 2) / 2);
+    var size = LOGO_W * scale, gap = small ? 3 : Math.max(2, h * 0.3);
     // list/table rows are often clipped to their box, so push left-aligned
     // small text right and put the logo where the text used to start
     var shift = small && halign === 0 ? size + gap : 0;
@@ -449,7 +469,7 @@
       var home = homeTeam(inst);
       if (!home) return;
       try {
-        drawSprite(null, LOGO_SPRITE, home.uid, 1301, 301, 5, 5, 0, 16777215, 0.9);
+        drawSprite(null, LOGO_SPRITE, home.uid, 1301, 301, 3, 3, 0, 16777215, 0.9);
         var oldCol = _2J2(), oldFont = _nD2._lF2, oldH = _nD2._iF2, oldV = _nD2._jF2;
         var label = home.name.toUpperCase();
         _gh1(2); _hh1(1); _ih1(1);
