@@ -1,3 +1,4 @@
 node_modules
 tools/nfl/.cache/
 __pycache__/
+team-badges-preview.png
