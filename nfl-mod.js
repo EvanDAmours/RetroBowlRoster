@@ -101,10 +101,199 @@
   try {
     ["RetroBowl.0.savedata.ini", "RetroBowlModded.0.savedata.ini"].forEach(migrateSave);
   } catch (err) {}
-  window.NFLMod = { migrateSave: migrateSave, teams: TEAMS };
+
+  // ---------- real NFL rosters ----------
+  // Madden position -> Retro Bowl position code
+  var POS = { QB: 1, HB: 2, FB: 2, TE: 3, WR: 4, LT: 5, LG: 5, C: 5, RG: 5, RT: 5,
+    DT: 6, LEDG: 6, REDG: 6, MIKE: 7, WILL: 7, SAM: 7, CB: 8, FS: 9, SS: 9, K: 10 };
+  // per Retro Bowl position: attribute caps [speed, strength, skill, stamina] and the
+  // divisor the game uses for its star rating (stars = round(sum / div * 10), 10 = 5 stars)
+  var CAPS = { 1: [7, 10, 10, 10, 37], 2: [10, 9, 6, 10, 34], 3: [7, 8, 8, 10, 33],
+    4: [10, 6, 10, 8, 34], 5: [5, 10, 10, 10, 35], 6: [5, 10, 10, 10, 35],
+    7: [7, 8, 8, 10, 33], 8: [9, 6, 8, 10, 33], 9: [9, 6, 8, 10, 33], 10: [7, 10, 10, 10, 37] };
+  // the user's roster (game limit is 10): each team's #1 at every position group
+  var LINEUP = [["QB"], ["HB"], ["WR"], ["TE"], ["LT", "LG", "C", "RG", "RT"],
+    ["DT", "LEDG", "REDG"], ["MIKE", "WILL", "SAM"], ["CB"], ["FS", "SS"], ["K"]];
+
+  // Madden overall -> Retro Bowl rating in half stars (1..10)
+  function starsFromOvr(ovr) {
+    var cuts = [97, 93, 89, 85, 81, 77, 73, 69, 64];
+    for (var i = 0; i < cuts.length; i++) if (ovr >= cuts[i]) return 10 - i;
+    return 1;
+  }
+  // potential: young players and Superstar / X-Factor dev traits have room to grow
+  function potentialStars(p, cur) {
+    var bonus = p.age <= 23 ? 3 : p.age <= 25 ? 2 : p.age <= 27 ? 1 : 0;
+    if (p.dev !== "N" && p.age < 30) bonus += 1;
+    return Math.min(10, cur + bonus);
+  }
+  function rating(a, div) { return Math.max(1, Math.min(10, Math.round((a[0] + a[1] + a[2] + a[3]) / div * 10))); }
+
+  // build [speed, strength, skill, stamina] hitting the target rating; speed follows Madden SPD.
+  // With `from`, grow those attributes (never shrink them) to reach a higher potential.
+  function attributesFor(code, target, spd, from) {
+    var c = CAPS[code], div = c[4];
+    var a = from ? from.slice() : [
+      Math.max(1, Math.min(c[0], Math.round((spd - 60) / 36 * c[0]))),
+      Math.max(1, Math.round(c[1] / 2)), Math.max(1, Math.round(c[2] / 2)), Math.max(1, Math.round(c[3] * 0.7))];
+    var up = from ? [2, 1, 3, 0] : [2, 1, 3], down = from ? [] : [3, 1, 2];
+    for (var guard = 0; guard < 80; guard++) {
+      var r = rating(a, div);
+      if (r === target) break;
+      var order = r < target ? up : down, d = r < target ? 1 : -1, best = -1, bestRoom = 0;
+      order.forEach(function (i) {
+        var room = d > 0 ? c[i] - a[i] : a[i] - 1;
+        if (room > bestRoom) { best = i; bestRoom = room; }
+      });
+      if (best < 0) {
+        // last resort: move speed
+        if (d > 0 && a[0] < c[0]) { a[0]++; continue; }
+        if (d < 0 && !from && a[0] > 1) { a[0]--; continue; }
+        break;
+      }
+      a[best] += d;
+    }
+    return a;
+  }
+
+  function applyRealPlayer(g, map, p) {
+    var code = POS[p.pos];
+    var cur = starsFromOvr(p.ovr), pot = potentialStars(p, cur);
+    var a = attributesFor(code, cur, p.spd);
+    var m = attributesFor(code, pot, p.spd, a);
+    var set = function (k, v) { _Yi(map, k, v); };
+    set("fname", p.fn); set("lname", p.ln); set("position", code);
+    set("age", p.age);
+    set("speed", a[0]); set("strength", a[1]); set("skill", a[2]); set("stamina", a[3]);
+    set("max_speed", m[0]); set("max_strength", m[1]); set("max_skill", m[2]); set("max_stamina", m[3]);
+    set("xp_level", Math.max(1, Math.min(9, p.age - 21)));
+    set("condition", 100); set("injury_week", 0);
+    set("attitude", p.dev === "X" ? 95 : p.dev === "S" ? 85 : 70);
+    set("salary", _MJ(g, g, map));
+    set("nfl", 1);
+  }
+
+  function rosterFor(uid) {
+    var list = (window.NFL_ROSTERS || [])[uid] || [], used = {}, picks = [];
+    LINEUP.forEach(function (group) {
+      for (var i = 0; i < list.length; i++) {
+        if (!used[i] && group.indexOf(list[i].pos) >= 0 && POS[list[i].pos]) { used[i] = 1; picks.push(list[i]); return; }
+      }
+    });
+    return picks;
+  }
+
+  function globalObj() {
+    var all = _si(64);
+    for (var k in all) if (Object.prototype.hasOwnProperty.call(all, k)) return all[k];
+    return null;
+  }
+
+  function installRealRoster(force) {
+    var g = globalObj();
+    if (!g || !window.NFL_ROSTERS) return;
+    var picks = rosterFor(Number(g._Ip));
+    if (!picks.length) return;
+    var old = g._Ln, keep = [], current = 0;
+    for (var j = 0; j < _wi(old); j++) {
+      var q = _zi(old, j);
+      if (Number(_Ai(q, "nflteam")) === Number(g._Ip)) current++;
+    }
+    if (current >= picks.length && force !== true) return; // already this team's real roster
+    for (var i = 0; i < _wi(old); i++) {
+      var pm = _zi(old, i);
+      if (Number(_Ai(pm, "hof")) === 1) keep.push(pm); else _fq(pm);
+    }
+    _bj(old);
+    g._Ln = _4j();
+    keep.forEach(function (pm) { _8j(g._Ln, pm); });
+    picks.forEach(function (p) {
+      var map = _zH(g, g, POS[p.pos], p.age, 2, 4);
+      _Yi(map, "signed_year", -1);
+      _Yi(map, "teamid", g._Ip);
+      if (Number(_Ai(map, "contract")) < 2) _Yi(map, "contract", 2);
+      applyRealPlayer(g, map, p);
+      _Yi(map, "nflteam", g._Ip);
+      _8j(g._Ln, map);
+    });
+    // real stars cost more than generated players; keep the team under the salary cap
+    var cap = Number(g._7t) || 150, total = 0, n = _wi(g._Ln);
+    for (var k = 0; k < n; k++) total += Number(_Ai(_zi(g._Ln, k), "salary")) || 0;
+    if (total > cap * 0.9) {
+      for (var k2 = 0; k2 < n; k2++) {
+        var sm = _zi(g._Ln, k2);
+        _Yi(sm, "salary", Math.max(1, Math.floor(Number(_Ai(sm, "salary")) * cap * 0.9 / total)));
+      }
+    }
+  }
+
+  // trade offers: swap each generated player for a real player from the offering team
+  function realTradeList() {
+    var g = globalObj();
+    if (!g || !window.NFL_ROSTERS) return;
+    var taken = {};
+    [g._Ln, g._vt].forEach(function (l) {
+      for (var i = 0; i < _wi(l); i++) { var pm = _zi(l, i); taken[_Ai(pm, "fname") + " " + _Ai(pm, "lname")] = 1; }
+    });
+    for (var i = 0; i < _wi(g._vt); i++) {
+      var pm = _zi(g._vt, i);
+      if (Number(_Ai(pm, "nfl")) === 1) continue;
+      var team = (NFL_ROSTERS[Number(_Ai(pm, "teamid"))] || []).filter(function (p) {
+        return POS[p.pos] && !taken[p.fn + " " + p.ln];
+      }).slice(0, 15);
+      if (!team.length) continue;
+      var p = team[Math.floor(Math.random() * team.length)];
+      taken[p.fn + " " + p.ln] = 1;
+      applyRealPlayer(g, pm, p);
+    }
+  }
+
+  function after(name, fn) {
+    var orig = window[name];
+    if (typeof orig !== "function") return;
+    window[name] = function () {
+      var r = orig.apply(this, arguments);
+      try { fn(); } catch (e) { console.log("NFLMOD " + name + " " + e.stack); }
+      return r;
+    };
+  }
+  // mod menu: replace the current save's roster with the user's team's real players
+  var rosterBtn = document.getElementById("a-nfl-roster");
+  if (rosterBtn) rosterBtn.onclick = function () {
+    var g = globalObj();
+    if (!g || !g._Ln) { alert("Start a career first."); return; }
+    if (typeof _6L === "function" && _6L(71)) { alert("Finish the current game first."); return; }
+    if (!confirm("Replace your whole roster with the real NFL players for your team? This cannot be undone.")) return;
+    try {
+      installRealRoster(true);
+      __j(g, g); // s_savegame
+      alert("Roster replaced with real NFL players. Reloading...");
+      location.reload();
+    } catch (e) { alert("Could not load the roster: " + e.message); }
+  };
+
+  after("_qK", installRealRoster);   // roster for a brand new save
+  after("_cE", installRealRoster);   // roster when taking charge of a team
+
+  // A new save builds its roster before the user's team is picked, so the roster we
+  // installed may belong to the wrong team. Detect exactly that state (every player is
+  // one we installed, all for another team) and swap in the right team's players.
+  // Rosters the user has built themselves are never touched.
+  setInterval(function () {
+    try {
+      var g = globalObj();
+      if (!g || !g._Ln || _wi(g._Ln) === 0) return;
+      for (var i = 0; i < _wi(g._Ln); i++) {
+        var pm = _zi(g._Ln, i);
+        var t = _Ai(pm, "nflteam");
+        if (t === undefined || Number(t) === Number(g._Ip)) return;
+      }
+      installRealRoster();
+    } catch (e) {}
+  }, 500);
+  after("_bH", realTradeList);       // trade list refresh
 
   // ---------- drawing hooks ----------
-  if (typeof _nh1 !== "function" || typeof _mh1 !== "function") return;
 
   var drawText = _nh1, drawTextColour = _RD1, drawTextTransformed = __G1, drawSprite = _mh1;
   var recent = {};
