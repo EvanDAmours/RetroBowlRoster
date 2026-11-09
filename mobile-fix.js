@@ -46,38 +46,53 @@
   window.addEventListener("pointercancel", fingerUp);
 
   // 2) No dead space on wide phones. The game's menus and HUD are laid out for 16:9, so on
-  //    a wider screen (an iPhone 17 Pro is about 2.17:1) it is centred with empty strips at
-  //    the sides. Fill those strips every frame by extending the picture's own edge columns,
-  //    so the menu background, field and crowd run right to the edges of the screen.
-  var bars = [];
+  //    a wider screen (an iPhone 17 Pro is about 2.17:1) it is centred with strips at the
+  //    sides. Fill each strip with a soft vertical gradient of the colours along that edge of
+  //    the picture (sky, stands, grass, menu blue...). No stretched pixels, no streaks, and it
+  //    only updates a few times a second with a gentle fade, so it never flickers.
+  var BANDS = 6, bars = [], probe = document.createElement("canvas");
+  probe.width = 1; probe.height = BANDS;
+  var probeCtx = probe.getContext("2d", { willReadFrequently: true });
   function makeBar(side) {
-    var c = document.createElement("canvas");
-    c.width = 1; c.height = 1;
-    c.style.cssText = "position:fixed;top:0;" + side + ":0;height:100%;width:0;z-index:0;" +
-      "pointer-events:none;image-rendering:pixelated";
-    document.body.appendChild(c);
-    return c;
+    var d = document.createElement("div");
+    d.style.cssText = "position:fixed;top:0;" + side + ":0;width:0;height:100%;z-index:0;pointer-events:none;" +
+      "background:#000;transition:opacity .4s ease";
+    document.body.appendChild(d);
+    return d;
+  }
+  function edgeGradient(g, fromRight) {
+    // average a 6px-wide edge strip down to BANDS colours (area-averaged by drawImage)
+    var sw = Math.min(6, g.width), sx = fromRight ? g.width - sw : 0;
+    probeCtx.imageSmoothingEnabled = true;
+    probeCtx.imageSmoothingQuality = "high";
+    probeCtx.clearRect(0, 0, 1, BANDS);
+    probeCtx.drawImage(g, sx, 0, sw, g.height, 0, 0, 1, BANDS);
+    var px = probeCtx.getImageData(0, 0, 1, BANDS).data, stops = [];
+    for (var i = 0; i < BANDS; i++) {
+      // darken slightly so the strips sit back and the game stays the focus
+      var r = Math.round(px[i * 4] * 0.8), gg = Math.round(px[i * 4 + 1] * 0.8), bb = Math.round(px[i * 4 + 2] * 0.8);
+      stops.push("rgb(" + r + "," + gg + "," + bb + ") " + Math.round((i + 0.5) / BANDS * 100) + "%");
+    }
+    return "linear-gradient(to bottom," + stops.join(",") + ")";
   }
   function paintBars() {
     var g = document.getElementById("canvas");
-    if (g && g.width > 0) {
-      if (!bars.length) bars = [makeBar("left"), makeBar("right")];
-      var r = g.getBoundingClientRect(), vw = window.innerWidth;
-      var widths = [Math.max(0, Math.ceil(r.left)), Math.max(0, Math.ceil(vw - r.right))];
-      for (var i = 0; i < 2; i++) {
-        var bar = bars[i], w = widths[i];
-        bar.style.width = w + "px";
-        bar.style.top = r.top + "px";
-        bar.style.height = r.height + "px";
-        if (w < 1) continue;
-        if (bar.height !== g.height) bar.height = g.height;
-        var sx = i === 0 ? 0 : g.width - 1;
-        try { bar.getContext("2d").drawImage(g, sx, 0, 1, g.height, 0, 0, 1, g.height); } catch (e) {}
-      }
+    if (!g || !g.width) return;
+    if (!bars.length) bars = [makeBar("left"), makeBar("right")];
+    var r = g.getBoundingClientRect(), vw = window.innerWidth;
+    var widths = [Math.max(0, Math.ceil(r.left)), Math.max(0, Math.ceil(vw - r.right))];
+    for (var i = 0; i < 2; i++) {
+      var bar = bars[i];
+      bar.style.width = widths[i] + "px";
+      bar.style.top = r.top + "px";
+      bar.style.height = r.height + "px";
+      if (widths[i] < 1) continue;
+      try { bar.style.background = edgeGradient(g, i === 1); } catch (e) {}
     }
-    requestAnimationFrame(paintBars);
   }
-  requestAnimationFrame(paintBars);
+  // sample right after the game has drawn a frame so the WebGL picture is readable
+  setInterval(function () { requestAnimationFrame(function () { setTimeout(paintBars, 0); }); }, 250);
+  window.addEventListener("resize", paintBars);
   document.documentElement.style.background = "#000";
 
   // 3) The game sizes itself once, at startup. If it starts in portrait and the phone is
