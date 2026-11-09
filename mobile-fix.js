@@ -13,6 +13,38 @@
     };
   }
 
+  // 1b) On a desktop a click sends both pointer events and mouse events, and the game
+  //     listens to both: its "tap to continue" prompts (end of a play, INCOMPLETE, first
+  //     down...) react to the mouse release. A finger only sends pointer events, so plays
+  //     could be thrown but never finished. Give the game the matching mouse press, move
+  //     and release for the primary finger, exactly like a desktop mouse.
+  function asMouse(e) {
+    return { button: 0, which: 1, pageX: e.pageX, pageY: e.pageY, clientX: e.clientX, clientY: e.clientY,
+      target: e.target, preventDefault: function () {}, stopPropagation: function () {} };
+  }
+  var fingerDown = false;
+  window.addEventListener("pointerdown", function (e) {
+    if (e.pointerType !== "touch" || !e.isPrimary || e.target.id !== "canvas") return;
+    var c = e.target;
+    fingerDown = true;
+    if (c.onmousemove) c.onmousemove(asMouse(e));
+    if (c.onmousedown) c.onmousedown(asMouse(e));
+  });
+  window.addEventListener("pointermove", function (e) {
+    if (e.pointerType !== "touch" || !e.isPrimary || !fingerDown) return;
+    var c = document.getElementById("canvas");
+    if (c && c.onmousemove) c.onmousemove(asMouse(e));
+  });
+  function fingerUp(e) {
+    if (e.pointerType !== "touch" || !e.isPrimary || !fingerDown) return;
+    fingerDown = false;
+    var c = document.getElementById("canvas");
+    if (c && c.onmousemove) c.onmousemove(asMouse(e));
+    if (window.onmouseup) window.onmouseup(asMouse(e));
+  }
+  window.addEventListener("pointerup", fingerUp);
+  window.addEventListener("pointercancel", fingerUp);
+
   // 2) No dead space on wide phones. The game's menus and HUD are laid out for 16:9, so on
   //    a wider screen (an iPhone 17 Pro is about 2.17:1) it is centred with empty strips at
   //    the sides. Fill those strips every frame by extending the picture's own edge columns,
